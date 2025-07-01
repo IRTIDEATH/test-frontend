@@ -14,8 +14,11 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "./ui/form";
-
+} from "../ui/form";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { authRegister } from "@/lib/api/AuthApi";
+import { LoaderCircleIcon } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -23,36 +26,49 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import Link from "next/link";
 
 const formSchema = z.object({
-  name_2101122796: z.string().min(1, "Username field cannot be empty"),
-  name_5435314018: z
-    .string()
-    .min(8, "Password must be at least 8 characters long"),
-  name_6503134456: z.string().min(1, "Please select a role"),
+  username: z.string().min(1, "Username field cannot be empty"),
+  password: z.string().min(8, "Password must be at least 8 characters long"),
+  role: z.string().min(1, "Please select a role"),
 });
 
-export default function RegisterForm() {
+export default function LoginForm() {
+  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name_2101122796: "",
-      name_5435314018: "",
-      name_6503134456: "",
+      username: "",
+      password: "",
+      role: ""
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsSubmitting(true);
     try {
-      console.log(values);
-      toast(
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(values, null, 2)}</code>
-        </pre>
-      );
+      const response = await authRegister(values);
+
+      if (response.status === 200) {
+        router.push("/login");
+      } else {
+        toast.error("Ada yang salah", {
+          description: "Ada sesuatu yang salah",
+        });
+      }
+      toast.success("Berhasil register", {
+        description: "User telah berhasil register",
+      });
     } catch (error) {
-      console.error("Form submission error", error);
-      toast.error("Failed to submit the form. Please try again.");
+      console.log(error)
+      toast.error("Ada yang salah", {
+        description: "Ada sesuatu yang salah",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   }
   return (
@@ -67,8 +83,9 @@ export default function RegisterForm() {
             onSubmit={form.handleSubmit(onSubmit)}
           >
             <FormField
+              disabled={isSubmitting}
               control={form.control}
-              name="name_2101122796"
+              name="username"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Username</FormLabel>
@@ -85,8 +102,9 @@ export default function RegisterForm() {
             />
 
             <FormField
+              disabled={isSubmitting}
               control={form.control}
-              name="name_5435314018"
+              name="password"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Password</FormLabel>
@@ -103,24 +121,24 @@ export default function RegisterForm() {
             />
 
             <FormField
+              disabled={isSubmitting}
               control={form.control}
-              name="name_6503134456"
+              name="role"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Role</FormLabel>
                   <Select
+                    disabled={isSubmitting}
                     onValueChange={field.onChange}
                     defaultValue={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select role" />
+                        <SelectValue placeholder="Select a role" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="user">
-                        User
-                      </SelectItem>
+                      <SelectItem value="user">User</SelectItem>
                       <SelectItem value="admin">Admin</SelectItem>
                     </SelectContent>
                   </Select>
@@ -129,15 +147,26 @@ export default function RegisterForm() {
               )}
             />
 
-            <Button type="submit" className="cursor-pointer">
-              Register
-            </Button>
+            {isSubmitting ? (
+              <Button disabled className="cursor-pointer" type="submit">
+                <LoaderCircleIcon
+                  className="-ms-1 animate-spin"
+                  size={16}
+                  aria-hidden="true"
+                />
+                Register...
+              </Button>
+            ) : (
+              <Button type="submit" className="cursor-pointer">
+                Register
+              </Button>
+            )}
 
             <div className="text-center text-sm">
               Already have an account?{" "}
-              <a href="#" className="underline text-primary">
+              <Link href="/login" className="underline text-primary">
                 Login
-              </a>
+              </Link>
             </div>
           </form>
         </CardContent>
