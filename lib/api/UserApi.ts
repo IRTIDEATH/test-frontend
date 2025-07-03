@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export const userDetail = async (token: any) => {
+export const userDetail = async (token: string | undefined) => {
     return await axios.get(`${process.env.NEXT_PUBLIC_API_PATH}/auth/profile`,
         {
             headers: {
